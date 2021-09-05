@@ -1,0 +1,11 @@
+[package]
+name = "single-upset-event-detector"
+version = "0.1.0"
+authors = ["Colemanator <peter.coleman@rexsoftware.com.au>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+packed_simd = { version = "0.3.4", package = "packed_simd_2" }
+
