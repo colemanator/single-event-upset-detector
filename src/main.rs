@@ -2,6 +2,9 @@ use std::time::{Instant, Duration};
 use std::thread::sleep;
 use structopt::StructOpt;
 use single_event_upset_detector::detector::Detector;
+use std::path::{PathBuf};
+use daemonize::Daemonize;
+use std::fs::{File, OpenOptions};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Single Event Upset Detector", about = "Detect single event upsets")]
@@ -14,10 +17,33 @@ struct Opts {
 
     #[structopt(short = "-v", long = "--verbose", parse(from_occurrences))]
     verbose: i32,
+
+    #[structopt(short = "-f", long = "--file", help = "When in the background redirect output to this path", parse(from_os_str))]
+    file: Option<PathBuf>,
+
+    #[structopt(short = "-d", long = "--daemon", help = "Run as background process")]
+    daemon: bool
 }
 
 fn main() {
     let opts: Opts = Opts::from_args();
+
+    // Run as background process
+    if opts.daemon {
+        let daemonize = match opts.file {
+            Some(path) => {
+                Daemonize::new()
+                    .stdout(OpenOptions::new().create(true).append(true).open(path.as_path()).unwrap())
+                    .stderr(OpenOptions::new().create(true).append(true).open(path.as_path()).unwrap())
+            }
+            _ => Daemonize::new()
+        };
+
+        match daemonize.start() {
+            Err(e) => eprintln!("Error, {}", e),
+            _ => {}
+        }
+    }
 
     // Allocate memory for the detector
     let mut detector = Detector::new(opts.bytes);

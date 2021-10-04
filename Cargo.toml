@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 core_simd = { git = "https://github.com/rust-lang/portable-simd" }
 structopt = "0.3"
+daemonize = "0.4.1"
