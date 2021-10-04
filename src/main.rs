@@ -1,72 +1,50 @@
-#![feature(test)]
-extern crate test;
+use std::time::{Instant, Duration};
+use std::thread::sleep;
+use structopt::StructOpt;
+use single_event_upset_detector::detector::Detector;
 
-use test::{Bencher, black_box};
-use packed_simd::{u8x4, u8x64, u64x8};
+#[derive(StructOpt, Debug)]
+#[structopt(name = "Single Event Upset Detector", about = "Detect single event upsets")]
+struct Opts {
+    #[structopt(help = "The number of bytes to use when scanning for a single event upset")]
+    bytes: usize,
 
-fn main() {}
+    #[structopt(help = "The number of seconds to wait in between scans")]
+    interval: usize,
 
-#[bench]
-fn linear_detect(b: &mut Bencher) {
-    let set: Vec<u64> = black_box(vec![0; 32_000_000]);
-
-    b.iter(|| {
-        set.iter().fold(0, |acc, &x| acc + x) > 0
-    });
+    #[structopt(short = "-v", long = "--verbose", parse(from_occurrences))]
+    verbose: i32,
 }
 
-#[bench]
-fn linear_identify(b: &mut Bencher) {
-    let mut set: Vec<u64> = black_box(vec![0; 32_000_000]);
+fn main() {
+    let opts: Opts = Opts::from_args();
 
-    b.iter(|| -> Vec<usize>{
-        set.iter().enumerate().filter(|(i, n)| **n != 0).map(|(i, n)| i).collect()
-    });
-}
+    // Allocate memory for the detector
+    let mut detector = Detector::new(opts.bytes);
 
-#[bench]
-fn vector_detect(b: &mut Bencher) {
-    let set: Vec<u64> = black_box(vec![0; 32_000_000]);
+    loop {
+        // Record start time for diagnostics
+        let now = Instant::now();
 
-    b.iter(|| {
-        let mut sum = u64x8::splat(0);
+        // Scan memory looking for single event upsets
+        let upsets = detector.get_upsets();
 
-        for i in (0..set.len()).step_by(64) {
-            // We control allocation so the slice is always guaranteed to be aligned
-            unsafe { sum += u64x8::from_slice_aligned_unchecked(&set[i..]); }
+        // Log diagnostics to stderr if verbose is set
+        if opts.verbose > 0 {
+            eprintln!("Scanned {}b in {}ns", opts.bytes, now.elapsed().as_nanos());
         }
 
-        sum.wrapping_sum() > 0
-    });
-}
-
-#[bench]
-fn vector_identify(b: &mut Bencher) {
-    let set: Vec<u64> = black_box(vec![0; 32_000_000]);
-
-    b.iter(|| {
-        let mut expected = u64x8::splat(0);
-        let mut upset: Vec<usize> = Vec::new();
-
-        for i in (0..set.len()).step_by(64) {
-            unsafe {
-                // We control allocation so the slice is always guaranteed to be aligned
-                if expected != u64x8::from_slice_aligned_unchecked(&set[i..]) {
-                    // Record the index(s) at which the upset occurred
-                    upset.extend(
-                        set[i..]
-                            .iter()
-                            .take(64)
-                            .enumerate()
-                            .filter(|(i, n)| **n != 0)
-                            .map(|(i, n)| i)
-                            .into_iter()
-                    );
-                }
+        if !upsets.is_empty() {
+            // Out put each single event upset to stdout
+            for upset in upsets {
+                println!("{}", upset);
             }
+
+            // If any single event upset occurs we need to reset the detector
+            detector.reset();
         }
 
-        upset
-    });
+        sleep(Duration::from_secs(opts.interval as u64));
+    }
 }
 
