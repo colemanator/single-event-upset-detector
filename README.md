@@ -21,7 +21,7 @@ _Alternatively you can prefix cargo sub commands with `+nightly`._
 ## Installing
 You can install this program run:
 ```asm
-cargo install .
+cargo install --path .
 ```
 
 ## Usage
