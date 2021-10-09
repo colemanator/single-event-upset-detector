@@ -1,10 +1,9 @@
-use std::time::{Instant, Duration};
-use std::thread::sleep;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use single_event_upset_detector::detector::Detector;
-use std::path::{PathBuf};
-use daemonize::Daemonize;
-use std::fs::{File, OpenOptions};
+use single_event_upset_detector::watcher::Watcher;
+use single_event_upset_detector::daemonize;
+use std::process::exit;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Single Event Upset Detector", about = "Detect single event upsets")]
@@ -15,62 +14,35 @@ struct Opts {
     #[structopt(help = "The number of seconds to wait in between scans")]
     interval: usize,
 
-    #[structopt(short = "-v", long = "--verbose", parse(from_occurrences))]
+    #[structopt(short, long, parse(from_occurrences))]
     verbose: i32,
 
-    #[structopt(short = "-f", long = "--file", help = "When in the background redirect output to this path", parse(from_os_str))]
+    #[structopt(short, long, help = "Output to file when process is a daemon", parse(from_os_str))]
     file: Option<PathBuf>,
 
-    #[structopt(short = "-d", long = "--daemon", help = "Run as background process")]
+    #[structopt(short, long, help = "Run as daemon")]
     daemon: bool
 }
 
 fn main() {
     let opts: Opts = Opts::from_args();
 
-    // Run as background process
-    if opts.daemon {
-        let daemonize = match opts.file {
-            Some(path) => {
-                Daemonize::new()
-                    .stdout(OpenOptions::new().create(true).append(true).open(path.as_path()).unwrap())
-                    .stderr(OpenOptions::new().create(true).append(true).open(path.as_path()).unwrap())
-            }
-            _ => Daemonize::new()
-        };
+    // If running as daemon a file must be passed
+    if opts.daemon && opts.file.is_none() {
+        eprintln!("file must be specified when running in the background");
+        exit(1);
+    }
 
-        match daemonize.start() {
-            Err(e) => eprintln!("Error, {}", e),
-            _ => {}
-        }
+    // Run as background process if directed
+    if opts.daemon {
+        daemonize(opts.file.unwrap())
     }
 
     // Allocate memory for the detector
-    let mut detector = Detector::new(opts.bytes);
+    let detector = Detector::new(opts.bytes);
 
-    loop {
-        // Record start time for diagnostics
-        let now = Instant::now();
-
-        // Scan memory looking for single event upsets
-        let upsets = detector.get_upsets();
-
-        // Log diagnostics to stderr if verbose is set
-        if opts.verbose > 0 {
-            eprintln!("Scanned {}b in {}ns", opts.bytes, now.elapsed().as_nanos());
-        }
-
-        if !upsets.is_empty() {
-            // Out put each single event upset to stdout
-            for upset in upsets {
-                println!("{}", upset);
-            }
-
-            // If any single event upset occurs we need to reset the detector
-            detector.reset();
-        }
-
-        sleep(Duration::from_secs(opts.interval as u64));
-    }
+    // Watch the detector
+    Watcher::new(detector, opts.interval, opts.verbose != 0)
+        .watch();
 }
 

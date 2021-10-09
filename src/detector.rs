@@ -74,4 +74,6 @@ impl Detector {
     pub fn reset(&mut self) {
         self.simd_vecs.fill(u64x8::splat(0));
     }
+
+    pub fn get_num_bytes(&self) -> usize { self.simd_vecs.len() * 8 * 8 }
 }

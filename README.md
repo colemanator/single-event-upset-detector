@@ -61,7 +61,6 @@ obviously use whatever memory you tell it to, beyond that it's single threaded a
 have a noticeable impact on system responsiveness.
 
 ## Todo
-* [ ] Add ability to run as a daemon
 * [ ] Add tests and benchmarks
 
 
