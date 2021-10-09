@@ -31,8 +31,14 @@ The usage for this program is as follows:
 single-event-upset-detector [FLAGS] <bytes> <interval>
 ```
 
+__Arguments:__
 * `bytes` The number of bytes to use when scanning for a single event upset 
 * `interval` The number of seconds to wait in between scans
+
+__Options:__
+* `-f --file` Output to file when process is a daemon
+* `-d --daemon` Run as daemon
+* `-v --verbose` log diagnostics
 
 _Use the `--help` flag for more info on usage._
 
