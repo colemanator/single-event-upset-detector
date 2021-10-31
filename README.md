@@ -68,9 +68,15 @@ either of those are a concern).
 Using SIMD directly instead of relying on LLVM's auto-vectorization I was able to improve 
 performance slightly, you can see a comparison by running the benchmarks using `cargo bench`.
 
-Performance will not scale linearly as the number of bytes is increased, running on a Intel core
-i7-7920HQ with 2133 MHz LPDDR3 memory it was able to scan 1Gb in ~60 miliseconds but it took over
-5 seconds to scan 8Gbs. 
+While running on a Intel core i7-7920HQ with 2133 MHz LPDDR3 memory it was able to scan the given
+memory in the following times:
+
+| bytes   | time  |
+|---------|-------|
+| 1000000 | 60ms  |
+| 2000000 | 120ms |
+| 4000000 | 260ms |
+| 8000000 | 540ms |
 
 This program will obviously use whatever memory you tell it to, beyond that it's single threaded 
 and shouldn't have a noticeable impact on system responsiveness.
