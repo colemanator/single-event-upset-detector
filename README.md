@@ -1,9 +1,14 @@
 # Single Event Upset Detector
-Small and very simple program to detect single events upset. Inspired by a video from Veritasium,
+Small and very simple program to detect single events upset. Inspired by a [video] from Veritasium,
 specifically a quoted stat that for every 250Mb of memory one upset event should occur per month.
 So in theory if you left this program running with 250Mb of memory over an entire month 
 statistically you should see one single event upset. I also took the opportunity to experiment with
 SIMD intrinsics and learnt a lot there.
+
+If running this program over a long period of time you might want to use `launchd` on OSX or 
+`systemd` on Linux to ensure it stays running even after a reboot.  
+
+_This program will not work if run on hardware which has error correction code memory._
 
 ## Requirements
 In order to build/run this program you'll need to be using the latest nightly release:
@@ -61,12 +66,10 @@ either of those are a concern).
 
 ## Performance
 Using SIMD directly instead of relying on LLVM's auto-vectorization I was able to improve 
-performance slightly. Running on a Intel core i7-7920HQ with 2133 MHz LPDDR3 memory it was
-able to scan over 12 GBs. What's probably more important is efficiency, this program will
-obviously use whatever memory you tell it to, beyond that it's single threaded and shouldn't
-have a noticeable impact on system responsiveness.
+performance slightly, you can see a comparison by running the benchmarks using `cargo bench`.
+Running on a Intel core i7-7920HQ with 2133 MHz LPDDR3 memory it was able to scan over 12 GBs.
+What's probably more important is efficiency, this program will obviously use whatever memory you
+tell it to, beyond that it's single threaded and shouldn't have a noticeable impact on system 
+responsiveness.
 
-## Todo
-* [ ] Add tests and benchmarks
-
-
+[video]: https://www.youtube.com/watch?v=AaZ_RSt0KP8

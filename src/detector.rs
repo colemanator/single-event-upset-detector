@@ -10,7 +10,7 @@ pub struct SingleEventUpset {
 }
 
 impl SingleEventUpset {
-    fn new(num: &u64) -> SingleEventUpset {
+    pub fn new(num: &u64) -> SingleEventUpset {
         // get the value of each bit
         let mut bits = [0; 64];
         for (index, bit) in (0..63).map(|n| num & (1 << n)).enumerate() {

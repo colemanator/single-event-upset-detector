@@ -8,3 +8,10 @@ edition = "2018"
 core_simd = { git = "https://github.com/rust-lang/portable-simd" }
 structopt = "0.3"
 daemonize = "0.4.1"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "vectors"
+harness = false
