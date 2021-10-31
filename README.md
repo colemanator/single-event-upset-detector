@@ -62,7 +62,7 @@ Single Event Upset detected - timestamp: {timestamp}, address: {address}, bits: 
 * `value` the new value of the integer (it was `0`)
 
 _You don't need a low interval but it might help keep the data uncompressed or help avoid swap (if
-either of those are a concern).
+either of those are a concern)._
 
 ## Performance
 Using SIMD directly instead of relying on LLVM's auto-vectorization I was able to improve 
